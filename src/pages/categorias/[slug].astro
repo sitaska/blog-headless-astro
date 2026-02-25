@@ -35,13 +35,6 @@ const posts = (await getPosts()).filter((post) => post.categories.includes(categ
 const mediaMap = await getFeaturedMediaMap(posts.map((post) => post.featured_media));
 const categories = await getCategories();
 const categoriesById = new Map(categories.map((category) => [category.id, category] as const));
-
-function truncateText(value: string, maxLength = 130) {
-	if (value.length <= maxLength) {
-		return value;
-	}
-	return `${value.slice(0, maxLength).trimEnd()}…`;
-}
 ---
 
 <!doctype html>
@@ -51,7 +44,7 @@ function truncateText(value: string, maxLength = 130) {
 		<style>
 			h1 {
 				text-align: center;
-				margin-bottom: 1rem;
+				margin-bottom: 1.7rem;
 			}
 			.back-link-wrap {
 				display: flex;
@@ -84,22 +77,26 @@ function truncateText(value: string, maxLength = 130) {
 				display: grid;
 				grid-template-columns: repeat(2, minmax(0, 1fr));
 				gap: 1.25rem;
-				align-items: start;
 			}
 			li {
 				border: 1px solid rgb(var(--gray-light));
 				border-radius: 12px;
 				padding: 0.9rem;
+				display: flex;
+				flex-direction: column;
+				height: auto;
+				overflow: hidden;
 			}
 			li img {
 				width: 100%;
 				aspect-ratio: 16 / 9;
 				object-fit: cover;
 				border-radius: 8px;
-				margin-bottom: 0.6rem;
+				margin-bottom: 0.9rem;
 			}
 			li > a {
-				display: block;
+				display: flex;
+				flex-direction: column;
 				text-decoration: none;
 				color: inherit;
 			}
@@ -144,6 +141,11 @@ function truncateText(value: string, maxLength = 130) {
 			@media (max-width: 900px) {
 				ul {
 					grid-template-columns: 1fr;
+					row-gap: 1.5rem;
+				}
+				li {
+					padding: 1.05rem;
+					height: auto;
 				}
 			}
 		</style>
@@ -187,7 +189,7 @@ function truncateText(value: string, maxLength = 130) {
 									<h2 set:html={post.title.rendered} />
 								</a>
 								<time datetime={post.date}>{new Date(post.date).toLocaleDateString('es-ES')}</time>
-								<p>{truncateText(stripHtml(post.excerpt.rendered))}</p>
+								<p>{stripHtml(post.excerpt.rendered)}</p>
 							</li>
 						);
 					})}

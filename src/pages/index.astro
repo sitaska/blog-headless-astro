@@ -8,13 +8,6 @@ import { getCategories, getCategoryBadgeColors, getFeaturedMediaMap, getPosts, s
 const [posts, categories] = await Promise.all([getPosts(), getCategories()]);
 const mediaMap = await getFeaturedMediaMap(posts.map((post) => post.featured_media));
 const categoriesById = new Map(categories.map((category) => [category.id, category] as const));
-
-function truncateText(value: string, maxLength = 130) {
-	if (value.length <= maxLength) {
-		return value;
-	}
-	return `${value.slice(0, maxLength).trimEnd()}…`;
-}
 ---
 
 <!doctype html>
@@ -22,32 +15,82 @@ function truncateText(value: string, maxLength = 130) {
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<style>
+			main {
+				width: 1120px;
+			}
 			h1 {
 				text-align: center;
-				margin-bottom: 1rem;
+				margin-bottom: 1.7rem;
+			}
+			.category-pills {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
+				gap: 0.55rem;
+				margin: 0 0 1.5rem;
+			}
+			.category-pill {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer;
+				font-family: inherit;
+				font-style: inherit;
+				padding: 0.5rem 0.95rem;
+				border-radius: 999px;
+				font-size: 0.83rem;
+				font-weight: 600;
+				line-height: 1.2;
+				text-decoration: none;
+				color: rgb(var(--gray-dark));
+				background: #fff;
+				border: 1px solid rgb(var(--gray-light));
+				box-shadow: 0 1px 2px rgba(var(--gray), 12%);
+				transition:
+					background-color 160ms ease,
+					color 160ms ease,
+					border-color 160ms ease,
+					box-shadow 160ms ease;
+			}
+			.category-pill.is-active {
+				background: var(--accent);
+				color: #fff;
+				border-color: var(--accent);
+				box-shadow: 0 2px 8px rgba(var(--gray), 22%);
+			}
+			.category-pill:hover,
+			.category-pill:focus-visible {
+				background: rgba(var(--gray-light), 45%);
+				color: rgb(var(--black));
+				border-color: var(--accent);
+				box-shadow: 0 2px 8px rgba(var(--gray), 18%);
 			}
 			ul {
 				list-style: none;
 				padding: 0;
 				display: grid;
-				grid-template-columns: repeat(2, minmax(0, 1fr));
+				grid-template-columns: repeat(3, minmax(0, 1fr));
 				gap: 1.25rem;
-				align-items: start;
 			}
 			li {
 				border: 1px solid rgb(var(--gray-light));
 				border-radius: 12px;
 				padding: 0.9rem;
+				display: flex;
+				flex-direction: column;
+				height: auto;
+				overflow: hidden;
 			}
 			li img {
 				width: 100%;
 				aspect-ratio: 16 / 9;
 				object-fit: cover;
 				border-radius: 8px;
-				margin-bottom: 0.6rem;
+				margin-bottom: 0.9rem;
 			}
 			li > a {
-				display: block;
+				display: flex;
+				flex-direction: column;
 				text-decoration: none;
 				color: inherit;
 			}
@@ -89,9 +132,22 @@ function truncateText(value: string, maxLength = 130) {
 				font-size: 0.95rem;
 				line-height: 1.5;
 			}
+			@media (max-width: 1150px) {
+				ul {
+					grid-template-columns: repeat(2, minmax(0, 1fr));
+				}
+			}
 			@media (max-width: 900px) {
+				.category-pills {
+					display: none;
+				}
 				ul {
 					grid-template-columns: 1fr;
+					row-gap: 1.5rem;
+				}
+				li {
+					padding: 1.05rem;
+					height: auto;
 				}
 			}
 		</style>
@@ -100,6 +156,18 @@ function truncateText(value: string, maxLength = 130) {
 		<Header />
 		<main>
 			<h1>Blog de las Cositas de Sita</h1>
+			{categories.length > 0 && (
+				<nav class="category-pills" aria-label="Categorías del blog">
+					<button class="category-pill is-active" type="button" data-filter="all" aria-pressed="true">
+						Todas
+					</button>
+					{categories.map((category) => (
+						<button class="category-pill" type="button" data-filter={category.slug} aria-pressed="false">
+							{category.name}
+						</button>
+					))}
+				</nav>
+			)}
 			{posts.length === 0 ? (
 				<p>No se pudieron cargar posts desde WordPress. Revisa PUBLIC_WP_API_BASE.</p>
 			) : (
@@ -110,8 +178,9 @@ function truncateText(value: string, maxLength = 130) {
 						const postCategories = post.categories
 							.map((categoryId) => categoriesById.get(categoryId))
 							.filter((category): category is WPCategory => Boolean(category));
+						const postCategorySlugs = postCategories.map((category) => category.slug).join(' ');
 						return (
-							<li>
+							<li data-categories={postCategorySlugs}>
 								<a href={`/${post.slug}/`}>
 									{media?.source_url && <img src={media.source_url} alt={postTitle} loading="lazy" />}
 									{postCategories.length > 0 && (
@@ -129,10 +198,35 @@ function truncateText(value: string, maxLength = 130) {
 											})}
 										</div>
 									)}
+									<script>
+										const filterButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.category-pill'));
+										const cards = Array.from(document.querySelectorAll<HTMLElement>('ul > li[data-categories]'));
+
+										const applyFilter = (filter: string) => {
+											cards.forEach((card) => {
+												const categories = (card.getAttribute('data-categories') || '').split(' ').filter(Boolean);
+												const visible = filter === 'all' || categories.includes(filter);
+												card.style.display = visible ? '' : 'none';
+											});
+
+											filterButtons.forEach((button) => {
+												const isActive = button.getAttribute('data-filter') === filter;
+												button.classList.toggle('is-active', isActive);
+												button.setAttribute('aria-pressed', String(isActive));
+											});
+										};
+
+										filterButtons.forEach((button) => {
+											button.addEventListener('click', () => {
+												const filter = button.getAttribute('data-filter') || 'all';
+												applyFilter(filter);
+											});
+										});
+									</script>
 									<h2 set:html={post.title.rendered} />
 								</a>
 								<time datetime={post.date}>{new Date(post.date).toLocaleDateString('es-ES')}</time>
-								<p>{truncateText(stripHtml(post.excerpt.rendered))}</p>
+								<p>{stripHtml(post.excerpt.rendered)}</p>
 							</li>
 						);
 					})}
