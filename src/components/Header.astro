@@ -24,9 +24,12 @@ import HeaderLink from './HeaderLink.astro';
 	}
 	header {
 		margin: 0;
-		padding: 0 1em;
+		padding: 0 2.1rem;
 		background: white;
 		box-shadow: 0 2px 8px rgba(var(--black), 5%);
+		position: sticky;
+		top: 0;
+		z-index: 40;
 	}
 	h2 {
 		margin: 0;
@@ -89,6 +92,9 @@ import HeaderLink from './HeaderLink.astro';
 	}
 
 	@media (max-width: 768px) {
+		header {
+			padding: 0 1em;
+		}
 		nav {
 			min-height: 62px;
 		}
