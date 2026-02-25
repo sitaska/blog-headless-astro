@@ -177,11 +177,13 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 					<button class="category-pill is-active" type="button" data-filter="all" aria-pressed="true">
 						Todas
 					</button>
-					{categories.map((category) => (
-						<button class="category-pill" type="button" data-filter={category.slug} aria-pressed="false">
-							{category.name}
-						</button>
-					))}
+					{categories
+						.filter((category) => category.slug !== 'sin-categoria' && category.name.toLowerCase() !== 'sin categoria')
+						.map((category) => (
+							<button class="category-pill" type="button" data-filter={category.slug} aria-pressed="false">
+								{category.name}
+							</button>
+						))}
 				</nav>
 			)}
 			{posts.length === 0 ? (
