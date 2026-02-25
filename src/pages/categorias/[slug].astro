@@ -6,6 +6,7 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 import {
 	getCategories,
 	getCategoryBadgeColors,
+	getEntityPath,
 	getFeaturedMediaMap,
 	getPosts,
 	stripHtml,
@@ -97,7 +98,17 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 				aspect-ratio: 16 / 9;
 				object-fit: cover;
 				border-radius: 8px;
+				transition: transform 220ms ease;
+			}
+			.card-media {
+				display: block;
+				overflow: hidden;
+				border-radius: 8px;
 				margin-bottom: 0.9rem;
+			}
+			.card-media:hover img,
+			.card-media:focus-visible img {
+				transform: scale(1.05);
 			}
 			.card-main-link {
 				display: flex;
@@ -180,12 +191,13 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 					{posts.map((post) => {
 						const media = mediaMap.get(post.featured_media);
 						const postTitle = stripHtml(post.title.rendered);
+						const postPath = getEntityPath(post) || post.slug;
 						const postCategories = post.categories
 							.map((postCategoryId) => categoriesById.get(postCategoryId))
 							.filter((category): category is WPCategory => Boolean(category));
 						return (
 							<li>
-								<a class="card-main-link" href={`/${post.slug}/`}>
+								<a class="card-main-link card-media" href={`/${postPath}/`}>
 									{media?.source_url && <img src={media.source_url} alt={postTitle} loading="lazy" />}
 								</a>
 								{postCategories.length > 0 && (
@@ -204,7 +216,7 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 										})}
 									</div>
 								)}
-								<a class="card-main-link" href={`/${post.slug}/`}>
+								<a class="card-main-link" href={`/${postPath}/`}>
 									<h2 set:html={post.title.rendered} />
 								</a>
 								<time datetime={post.date}>{new Date(post.date).toLocaleDateString('es-ES')}</time>

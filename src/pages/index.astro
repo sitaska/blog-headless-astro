@@ -3,7 +3,15 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
-import { getCategories, getCategoryBadgeColors, getFeaturedMediaMap, getPosts, stripHtml, type WPCategory } from '../lib/wp';
+import {
+	getCategories,
+	getCategoryBadgeColors,
+	getEntityPath,
+	getFeaturedMediaMap,
+	getPosts,
+	stripHtml,
+	type WPCategory,
+} from '../lib/wp';
 
 const [posts, categories] = await Promise.all([getPosts(), getCategories()]);
 const mediaMap = await getFeaturedMediaMap(posts.map((post) => post.featured_media));
@@ -98,7 +106,17 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 				aspect-ratio: 16 / 9;
 				object-fit: cover;
 				border-radius: 8px;
+				transition: transform 220ms ease;
+			}
+			.card-media {
+				display: block;
+				overflow: hidden;
+				border-radius: 8px;
 				margin-bottom: 0.9rem;
+			}
+			.card-media:hover img,
+			.card-media:focus-visible img {
+				transform: scale(1.05);
 			}
 			.card-main-link {
 				display: flex;
@@ -195,13 +213,14 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 					{posts.map((post) => {
 						const media = mediaMap.get(post.featured_media);
 						const postTitle = stripHtml(post.title.rendered);
+						const postPath = getEntityPath(post) || post.slug;
 						const postCategories = post.categories
 							.map((categoryId) => categoriesById.get(categoryId))
 							.filter((category): category is WPCategory => Boolean(category));
 						const postCategorySlugs = postCategories.map((category) => category.slug).join(' ');
 						return (
 							<li data-categories={postCategorySlugs}>
-								<a class="card-main-link" href={`/${post.slug}/`}>
+								<a class="card-main-link card-media" href={`/${postPath}/`}>
 									{media?.source_url && <img src={media.source_url} alt={postTitle} loading="lazy" />}
 								</a>
 								{postCategories.length > 0 && (
@@ -220,7 +239,7 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 										})}
 									</div>
 								)}
-								<a class="card-main-link" href={`/${post.slug}/`}>
+								<a class="card-main-link" href={`/${postPath}/`}>
 									<h2 set:html={post.title.rendered} />
 								</a>
 								<time datetime={post.date}>{new Date(post.date).toLocaleDateString('es-ES')}</time>
