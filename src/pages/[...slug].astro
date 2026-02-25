@@ -3,7 +3,17 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
-import { getEntityPath, getFeaturedMediaMap, getPages, getPosts, stripHtml, type WPEntity } from '../lib/wp';
+import {
+	getCategories,
+	getCategoryBadgeColors,
+	getEntityPath,
+	getFeaturedMediaMap,
+	getPages,
+	getPosts,
+	stripHtml,
+	type WPCategory,
+	type WPEntity,
+} from '../lib/wp';
 
 type Props = {
 	item: WPEntity;
@@ -41,6 +51,11 @@ const title = postTitlePlain;
 const description = item.excerpt?.rendered ? stripHtml(item.excerpt.rendered) : SITE_DESCRIPTION;
 const featuredMediaMap = await getFeaturedMediaMap([item.featured_media]);
 const tocThumbnail = featuredMediaMap.get(item.featured_media);
+const postCategoryIds = 'categories' in item ? item.categories : [];
+const categories = postCategoryIds.length > 0 ? await getCategories() : [];
+const postCategories = postCategoryIds
+	.map((categoryId) => categories.find((category) => category.id === categoryId))
+	.filter((category): category is WPCategory => Boolean(category));
 const publishedDate = new Date(item.date).toISOString();
 const modifiedDate = new Date(item.modified || item.date).toISOString();
 const articleStructuredData = {
@@ -181,6 +196,23 @@ const contentWithAnchors = normalizedPostContent.replace(/<h([23])([^>]*)>([\s\S
 			article {
 				max-width: 100%;
 			}
+			.post-categories {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.4rem;
+				margin-bottom: 0.55rem;
+			}
+			.category-tag {
+				display: inline-block;
+				padding: 0.17rem 0.54rem;
+				border-radius: 999px;
+				font-size: 0.76rem;
+				font-weight: 600;
+				line-height: 1.25;
+				background: var(--tag-bg);
+				color: var(--tag-text);
+				border: 1px solid var(--tag-border);
+			}
 			h1 {
 				line-height: 1.2;
 			}
@@ -271,6 +303,21 @@ const contentWithAnchors = normalizedPostContent.replace(/<h([23])([^>]*)>([\s\S
 				)
 			}
 			<article>
+				{postCategories.length > 0 && (
+					<div class="post-categories" aria-label="Categorías del post">
+						{postCategories.map((category) => {
+							const colors = getCategoryBadgeColors(category.id);
+							return (
+								<span
+									class="category-tag"
+									style={`--tag-bg: ${colors.bg}; --tag-text: ${colors.text}; --tag-border: ${colors.border};`}
+								>
+									{category.name}
+								</span>
+							);
+						})}
+					</div>
+				)}
 				<h1 set:html={item.title.rendered} />
 				<time datetime={item.date}>Actualizado el {new Date(item.modified || item.date).toLocaleDateString('es-ES')}</time>
 				<div class="post-content" set:html={contentWithAnchors} />

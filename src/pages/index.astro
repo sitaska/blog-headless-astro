@@ -3,10 +3,11 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
-import { getFeaturedMediaMap, getPosts, stripHtml } from '../lib/wp';
+import { getCategories, getCategoryBadgeColors, getFeaturedMediaMap, getPosts, stripHtml, type WPCategory } from '../lib/wp';
 
-const posts = await getPosts();
+const [posts, categories] = await Promise.all([getPosts(), getCategories()]);
 const mediaMap = await getFeaturedMediaMap(posts.map((post) => post.featured_media));
+const categoriesById = new Map(categories.map((category) => [category.id, category] as const));
 
 function truncateText(value: string, maxLength = 130) {
 	if (value.length <= maxLength) {
@@ -50,6 +51,23 @@ function truncateText(value: string, maxLength = 130) {
 				text-decoration: none;
 				color: inherit;
 			}
+			.card-categories {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.35rem;
+				margin-bottom: 0.45rem;
+			}
+			.category-tag {
+				display: inline-block;
+				padding: 0.14rem 0.5rem;
+				border-radius: 999px;
+				font-size: 0.75rem;
+				font-weight: 600;
+				line-height: 1.25;
+				background: var(--tag-bg);
+				color: var(--tag-text);
+				border: 1px solid var(--tag-border);
+			}
 			h2 {
 				font-size: 1.2rem;
 				line-height: 1.3;
@@ -89,10 +107,28 @@ function truncateText(value: string, maxLength = 130) {
 					{posts.map((post) => {
 						const media = mediaMap.get(post.featured_media);
 						const postTitle = stripHtml(post.title.rendered);
+						const postCategories = post.categories
+							.map((categoryId) => categoriesById.get(categoryId))
+							.filter((category): category is WPCategory => Boolean(category));
 						return (
 							<li>
 								<a href={`/${post.slug}/`}>
 									{media?.source_url && <img src={media.source_url} alt={postTitle} loading="lazy" />}
+									{postCategories.length > 0 && (
+										<div class="card-categories" aria-label="Categorías del post">
+											{postCategories.map((category) => {
+												const colors = getCategoryBadgeColors(category.id);
+												return (
+													<span
+														class="category-tag"
+														style={`--tag-bg: ${colors.bg}; --tag-text: ${colors.text}; --tag-border: ${colors.border};`}
+													>
+														{category.name}
+													</span>
+												);
+											})}
+										</div>
+									)}
 									<h2 set:html={post.title.rendered} />
 								</a>
 								<time datetime={post.date}>{new Date(post.date).toLocaleDateString('es-ES')}</time>

@@ -42,6 +42,21 @@ export type WPMedia = {
 
 export type WPEntity = WPPost | WPPage;
 
+export type CategoryBadgeColors = {
+	bg: string;
+	text: string;
+	border: string;
+};
+
+const CATEGORY_BADGE_PALETTE: CategoryBadgeColors[] = [
+	{ bg: '#E9F2FF', text: '#1D4ED8', border: '#BFDBFE' },
+	{ bg: '#EAFBF2', text: '#15803D', border: '#BBF7D0' },
+	{ bg: '#FFF5E8', text: '#B45309', border: '#FED7AA' },
+	{ bg: '#F3ECFF', text: '#6D28D9', border: '#DDD6FE' },
+	{ bg: '#FFEDEE', text: '#B91C1C', border: '#FECACA' },
+	{ bg: '#EEF7FA', text: '#0F766E', border: '#A7F3D0' },
+];
+
 const DEFAULT_API_BASE = 'https://cms.lascositasdesita.com/wp-json/wp/v2';
 const WP_API_BASE = (import.meta.env.WP_API_BASE ?? import.meta.env.PUBLIC_WP_API_BASE ?? DEFAULT_API_BASE).replace(
 	/\/$/,
@@ -164,4 +179,9 @@ export function getEntityPath(entity: WPEntity) {
 
 export function stripHtml(value: string) {
 	return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+export function getCategoryBadgeColors(categoryId: number): CategoryBadgeColors {
+	const paletteIndex = Math.abs(categoryId) % CATEGORY_BADGE_PALETTE.length;
+	return CATEGORY_BADGE_PALETTE[paletteIndex];
 }
