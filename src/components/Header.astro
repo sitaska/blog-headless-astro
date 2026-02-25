@@ -6,7 +6,12 @@ import HeaderLink from './HeaderLink.astro';
 <header>
 	<nav>
 		<h2><a href="/">{SITE_TITLE}</a></h2>
-		<div class="internal-links">
+		<button class="menu-toggle" type="button" aria-controls="main-nav-links" aria-expanded="false" aria-label="Abrir menú">
+			<span></span>
+			<span></span>
+			<span></span>
+		</button>
+		<div class="internal-links" id="main-nav-links">
 			<HeaderLink href="/">Inicio</HeaderLink>
 			<HeaderLink href="/categorias/">Categorías</HeaderLink>
 			<a href="https://lascositasdesita.com/">Sobre mí</a>
@@ -14,6 +19,9 @@ import HeaderLink from './HeaderLink.astro';
 	</nav>
 </header>
 <style>
+	:root {
+		--mobile-breakpoint: 768px;
+	}
 	header {
 		margin: 0;
 		padding: 0 1em;
@@ -34,19 +42,138 @@ import HeaderLink from './HeaderLink.astro';
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.75rem;
+		min-height: 68px;
+		position: relative;
 	}
 	nav a {
-		padding: 1em 0.5em;
+		padding: 1.1em 0.5em;
 		color: var(--black);
-		border-bottom: 4px solid transparent;
 		text-decoration: none;
+		transition: color 140ms ease;
+	}
+	nav a:hover,
+	nav a:focus-visible {
+		color: var(--accent);
 	}
 	nav a.active {
 		text-decoration: none;
-		border-bottom-color: var(--accent);
+		color: var(--accent);
+		font-weight: 700;
 	}
 	.internal-links {
 		display: flex;
 		gap: 0.3rem;
 	}
+	.internal-links a {
+		font-size: 0.92rem;
+	}
+	.menu-toggle {
+		display: none;
+		background: transparent;
+		border: 0;
+		padding: 0.35rem;
+		margin: 0;
+		cursor: pointer;
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.menu-toggle span {
+		display: block;
+		width: 22px;
+		height: 2px;
+		background: rgb(var(--black));
+		border-radius: 2px;
+		transition: transform 140ms ease, opacity 140ms ease;
+	}
+
+	@media (max-width: 768px) {
+		nav {
+			min-height: 62px;
+		}
+		.menu-toggle {
+			display: inline-flex;
+			position: relative;
+			z-index: 31;
+		}
+		.internal-links {
+			display: flex;
+			width: min(280px, calc(100vw - 2rem));
+			position: absolute;
+			top: calc(100% + 0.35rem);
+			right: 0;
+			padding: 0.35rem;
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.1rem;
+			background: #fff;
+			border: 1px solid rgb(var(--gray-light));
+			border-radius: 10px;
+			box-shadow: 0 10px 28px rgba(var(--black), 12%);
+			z-index: 30;
+			opacity: 0;
+			visibility: hidden;
+			pointer-events: none;
+			transform: translateY(-4px);
+			transition: opacity 140ms ease, transform 140ms ease, visibility 140ms ease;
+		}
+		.internal-links.open {
+			opacity: 1;
+			visibility: visible;
+			pointer-events: auto;
+			transform: translateY(0);
+		}
+		.internal-links a {
+			width: 100%;
+			padding: 0.65rem 0.45rem;
+			font-size: 0.9rem;
+			border-radius: 8px;
+		}
+		.internal-links a:hover,
+		.internal-links a:focus-visible {
+			background: rgb(var(--gray-light));
+		}
+		.menu-toggle[aria-expanded='true'] span:nth-child(1) {
+			transform: translateY(6px) rotate(45deg);
+		}
+		.menu-toggle[aria-expanded='true'] span:nth-child(2) {
+			opacity: 0;
+		}
+		.menu-toggle[aria-expanded='true'] span:nth-child(3) {
+			transform: translateY(-6px) rotate(-45deg);
+		}
+	}
 </style>
+
+<script>
+	const menuButton = document.querySelector('.menu-toggle');
+	const menuLinks = document.querySelector('#main-nav-links');
+	const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+	if (menuButton && menuLinks) {
+		const closeMenu = () => {
+			menuLinks.classList.remove('open');
+			menuButton.setAttribute('aria-expanded', 'false');
+		};
+
+		menuButton.addEventListener('click', () => {
+			const isOpen = menuLinks.classList.toggle('open');
+			menuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+		});
+
+		menuLinks.querySelectorAll('a').forEach((link) => {
+			link.addEventListener('click', () => {
+				if (mediaQuery.matches) {
+					closeMenu();
+				}
+			});
+		});
+
+		mediaQuery.addEventListener('change', (event) => {
+			if (!event.matches) {
+				closeMenu();
+			}
+		});
+	}
+</script>
