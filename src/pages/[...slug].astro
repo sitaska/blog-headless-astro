@@ -1,0 +1,66 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { getEntityPath, getPages, getPosts, stripHtml, type WPEntity } from '../lib/wp';
+
+type Props = {
+	item: WPEntity;
+};
+
+export async function getStaticPaths() {
+	const [posts, pages] = await Promise.all([getPosts(), getPages()]);
+	const seen = new Set<string>();
+
+	return [...posts, ...pages]
+		.map((item) => {
+			const path = getEntityPath(item);
+			if (!path || seen.has(path) || path === 'posts') {
+				return null;
+			}
+			seen.add(path);
+			return {
+				params: { slug: path },
+				props: { item },
+			};
+		})
+		.filter(Boolean);
+}
+
+const { item } = Astro.props as Props;
+const title = `${stripHtml(item.title.rendered)} | ${SITE_TITLE}`;
+const description = item.excerpt?.rendered ? stripHtml(item.excerpt.rendered) : SITE_DESCRIPTION;
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<BaseHead title={title} description={description} />
+		<style>
+			article {
+				max-width: 760px;
+				margin: 0 auto;
+			}
+			h1 {
+				line-height: 1.2;
+			}
+			time {
+				display: block;
+				margin-bottom: 1.25rem;
+				color: rgb(var(--gray));
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<article>
+				<h1 set:html={item.title.rendered} />
+				<time datetime={item.date}>Actualizado el {new Date(item.modified || item.date).toLocaleDateString('es-ES')}</time>
+				<div class="post-content" set:html={item.content.rendered} />
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>

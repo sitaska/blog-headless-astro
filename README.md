@@ -1,62 +1,70 @@
-# Astro Starter Kit: Blog
+# Blog Headless con Astro + WordPress
 
-```sh
-npm create astro@latest -- --template blog
+Proyecto base para migrar `blog.lascositasdesita.com` desde WordPress clásico a frontend estático con Astro, manteniendo SEO y URLs.
+
+## Stack
+
+- Astro (estático)
+- WordPress REST API como CMS
+- RSS + Sitemap
+- Rutas por slug para conservar URLs del blog
+
+## Variables de entorno
+
+Copia `.env.example` a `.env` y ajusta valores si hace falta:
+
+```bash
+PUBLIC_SITE_URL=https://blog.lascositasdesita.com
+PUBLIC_WP_API_BASE=https://cms.lascositasdesita.com/wp-json/wp/v2
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Comandos
 
-Features:
+- `npm install`
+- `npm run dev`
+- `npm run check`
+- `npm run build`
+- `npm run preview`
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
+## Rutas implementadas
 
-## 🚀 Project Structure
+- `/` inicio con listado de posts
+- `/categorias/` listado de categorías
+- `/categorias/:slug/` listado por categoría
+- `/:slug` y rutas anidadas vía `src/pages/[...slug].astro`
+- `/rss.xml`
+- `/robots.txt`
 
-Inside of your Astro project, you'll see the following folders and files:
+## Migración (checklist)
 
-```text
-├── public/
-├── src/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
-├── astro.config.mjs
-├── README.md
-├── package.json
-└── tsconfig.json
-```
+1. Confirmar que los slugs en WordPress son los finales.
+2. Verificar que cada URL antigua existe en el build nuevo.
+3. Añadir redirecciones puntuales en `src/redirects.mjs` para URLs legacy.
+4. Validar canonical, meta robots y sitemap antes del corte.
+5. Hacer crawl previo/post (ej. Screaming Frog) y comparar 200/301/404.
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## SEO y paridad de URLs
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+- La ruta dinámica usa el `link` original de WordPress para reconstruir pathname.
+- `sitemap` se genera automáticamente con Astro.
+- `robots.txt` apunta al sitemap del dominio final.
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+## Despliegue en Vercel / Netlify
 
-Any static assets, like images, can be placed in the `public/` directory.
+1. Conecta el repositorio en Vercel o Netlify.
+2. Build command: `npm run build`.
+3. Output directory: `dist`.
+4. Define variables `PUBLIC_SITE_URL` y `PUBLIC_WP_API_BASE` en el panel del hosting.
+5. Publica y prueba en URL temporal.
+6. Mantén WordPress en `cms.lascositasdesita.com` como backend de contenidos.
 
-## 🧞 Commands
+## Corte de dominio (`blog.lascositasdesita.com`)
 
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-
-## Credit
-
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+1. Baja TTL DNS a 300 unos minutos antes.
+2. Apunta DNS al nuevo proveedor (CNAME o A/ALIAS según Vercel/Netlify).
+3. Revalida:
+	- Home
+	- 10-20 posts críticos
+	- RSS
+	- Sitemap
+4. Mantén monitorización de 404 y Search Console 72h.

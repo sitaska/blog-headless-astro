@@ -1,11 +1,30 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
-import { getFeaturedMediaMap, getPosts, stripHtml } from '../lib/wp';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+import { getCategories, getFeaturedMediaMap, getPosts, stripHtml } from '../../lib/wp';
 
-const posts = await getPosts();
+type Props = {
+	categoryId: number;
+	categoryName: string;
+};
+
+export async function getStaticPaths() {
+	const categories = await getCategories();
+
+	return categories.map((category) => ({
+		params: { slug: category.slug },
+		props: {
+			categoryId: category.id,
+			categoryName: category.name,
+			categorySlug: category.slug,
+		},
+	}));
+}
+
+const { categoryId, categoryName } = Astro.props as Props;
+const posts = (await getPosts()).filter((post) => post.categories.includes(categoryId));
 const mediaMap = await getFeaturedMediaMap(posts.map((post) => post.featured_media));
 
 function truncateText(value: string, maxLength = 130) {
@@ -17,9 +36,9 @@ function truncateText(value: string, maxLength = 130) {
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="es">
 	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<BaseHead title={`${categoryName} | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
 		<style>
 			ul {
 				list-style: none;
@@ -66,9 +85,10 @@ function truncateText(value: string, maxLength = 130) {
 	<body>
 		<Header />
 		<main>
-			<h1>Inicio</h1>
+			<h1>Categoría: {categoryName}</h1>
+			<p><a href="/categorias/">← Volver a categorías</a></p>
 			{posts.length === 0 ? (
-				<p>No se pudieron cargar posts desde WordPress. Revisa PUBLIC_WP_API_BASE.</p>
+				<p>No hay entradas en esta categoría.</p>
 			) : (
 				<ul>
 					{posts.map((post) => {

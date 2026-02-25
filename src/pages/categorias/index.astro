@@ -1,0 +1,60 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+import { getCategories } from '../../lib/wp';
+
+const categories = await getCategories();
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<BaseHead title={`Categorías | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+		<style>
+			ul {
+				list-style: none;
+				padding: 0;
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+				gap: 0.9rem;
+			}
+			li a {
+				display: block;
+				border: 1px solid rgb(var(--gray-light));
+				border-radius: 12px;
+				padding: 0.85rem 1rem;
+				text-decoration: none;
+			}
+			li a:hover {
+				border-color: var(--accent);
+			}
+			small {
+				color: rgb(var(--gray));
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<h1>Categorías</h1>
+			{categories.length === 0 ? (
+				<p>No se pudieron cargar categorías desde WordPress.</p>
+			) : (
+				<ul>
+					{categories.map((category) => (
+						<li>
+							<a href={`/categorias/${category.slug}/`}>
+								<strong>{category.name}</strong>
+								<br />
+								<small>{category.count} entradas</small>
+							</a>
+						</li>
+					))}
+				</ul>
+			)}
+		</main>
+		<Footer />
+	</body>
+</html>
