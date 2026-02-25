@@ -100,11 +100,23 @@ img {
 .post-content img {
 	max-width: 100%;
 }
+.post-content .wp-block-embed,
+.post-content figure.wp-block-embed,
+.post-content .wp-block-video,
+.post-content figure.wp-block-video {
+	max-width: 100%;
+	overflow: hidden;
+}
+.post-content .wp-block-embed__wrapper {
+	max-width: 100%;
+}
 .post-content iframe,
 .post-content embed,
 .post-content object,
 .post-content video {
-	width: 100%;
+	width: 100% !important;
+	height: auto;
+	aspect-ratio: 16 / 9;
 	display: block;
 	border: 0;
 }
