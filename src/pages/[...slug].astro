@@ -3,10 +3,16 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
-import { getEntityPath, getPages, getPosts, stripHtml, type WPEntity } from '../lib/wp';
+import { getEntityPath, getFeaturedMediaMap, getPages, getPosts, stripHtml, type WPEntity } from '../lib/wp';
 
 type Props = {
 	item: WPEntity;
+};
+
+type TocItem = {
+	id: string;
+	text: string;
+	level: 2 | 3;
 };
 
 export async function getStaticPaths() {
@@ -31,6 +37,39 @@ export async function getStaticPaths() {
 const { item } = Astro.props as Props;
 const title = `${stripHtml(item.title.rendered)} | ${SITE_TITLE}`;
 const description = item.excerpt?.rendered ? stripHtml(item.excerpt.rendered) : SITE_DESCRIPTION;
+const featuredMediaMap = await getFeaturedMediaMap([item.featured_media]);
+const tocThumbnail = featuredMediaMap.get(item.featured_media);
+
+const stripTags = (value: string) => value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+const slugify = (value: string) =>
+	stripTags(value)
+		.toLowerCase()
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^a-z0-9\s-]/g, '')
+		.trim()
+		.replace(/\s+/g, '-') || 'seccion';
+
+const idCounter = new Map<string, number>();
+const tocItems: TocItem[] = [];
+
+const contentWithAnchors = item.content.rendered.replace(/<h([23])([^>]*)>([\s\S]*?)<\/h\1>/gi, (_full, rawLevel, rawAttrs, inner) => {
+	const level = Number(rawLevel) as 2 | 3;
+	const currentIdMatch = rawAttrs.match(/\sid=["']([^"']+)["']/i);
+	const baseId = currentIdMatch?.[1] || slugify(inner);
+	const seen = idCounter.get(baseId) ?? 0;
+	idCounter.set(baseId, seen + 1);
+	const finalId = seen === 0 ? baseId : `${baseId}-${seen + 1}`;
+
+	tocItems.push({
+		id: finalId,
+		text: stripTags(inner),
+		level,
+	});
+
+	const attrsWithoutId = rawAttrs.replace(/\sid=["'][^"']+["']/i, '');
+	return `<h${level}${attrsWithoutId} id="${finalId}">${inner}</h${level}>`;
+});
 ---
 
 <!doctype html>
@@ -38,29 +77,218 @@ const description = item.excerpt?.rendered ? stripHtml(item.excerpt.rendered) : 
 	<head>
 		<BaseHead title={title} description={description} />
 		<style>
+			main.post-layout {
+				width: min(1100px, calc(100% - 2em));
+				display: grid;
+				grid-template-columns: minmax(0, 760px);
+				justify-content: center;
+				gap: 5rem;
+			}
+			main.post-layout.has-toc {
+				grid-template-columns: 260px minmax(0, 760px);
+				align-items: start;
+			}
+			aside.post-toc {
+				position: sticky;
+				top: 96px;
+				max-height: calc(100vh - 120px);
+				overflow-y: auto;
+				padding: 1rem;
+				width: 305px;
+				margin-left: -45px;
+				border: 1px solid rgb(var(--gray-light));
+				border-radius: 10px;
+				background: #fff;
+			}
+			aside.post-toc .toc-thumb {
+				margin: -0.2rem -0.2rem 0.7rem;
+			}
+			aside.post-toc .toc-thumb img {
+				display: block;
+				width: 100%;
+				aspect-ratio: 16 / 9;
+				object-fit: cover;
+				border-radius: 8px;
+			}
+			aside.post-toc h2 {
+				font-size: 1rem;
+				margin-bottom: 0.5rem;
+			}
+			aside.post-toc ul {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+				display: grid;
+				gap: 0.35rem;
+			}
+			aside.post-toc li.toc-l3 {
+				padding-left: 0.8rem;
+			}
+			aside.post-toc a {
+				text-decoration: none;
+				color: rgb(var(--gray-dark));
+				font-size: 0.92rem;
+				line-height: 1.35;
+				padding: 0.18rem 0.35rem;
+				border-radius: 6px;
+				display: inline-block;
+			}
+			aside.post-toc a:hover {
+				color: var(--accent);
+				background: rgba(var(--gray-light), 0.55);
+			}
+			aside.post-toc a.active {
+				color: var(--accent);
+				background: rgba(var(--gray-light), 0.75);
+				font-weight: 600;
+			}
 			article {
-				max-width: 760px;
-				margin: 0 auto;
+				max-width: 100%;
 			}
 			h1 {
 				line-height: 1.2;
+			}
+			.post-content h2 {
+				font-size: 1.65rem;
+				line-height: 1.3;
+				margin-top: 1.7rem;
+			}
+			.post-content h3 {
+				font-size: 1.35rem;
+				line-height: 1.35;
+				margin-top: 1.2rem;
+			}
+			.post-content p,
+			.post-content li {
+				line-height: 1.52;
+			}
+			.post-content p {
+				margin-bottom: 0.8rem;
 			}
 			time {
 				display: block;
 				margin-bottom: 1.25rem;
 				color: rgb(var(--gray));
 			}
+			@media (max-width: 1024px) {
+				main.post-layout,
+				main.post-layout.has-toc {
+					width: 720px;
+					max-width: calc(100% - 2em);
+					display: block;
+				}
+				aside.post-toc {
+					display: none;
+				}
+			}
 		</style>
 	</head>
 	<body>
 		<Header />
-		<main>
+		<main class:list={['post-layout', { 'has-toc': tocItems.length > 0 }]}>
+			{
+				tocItems.length > 0 && (
+					<aside class="post-toc" aria-label="Índice del artículo">
+						{tocThumbnail?.source_url && (
+							<div class="toc-thumb">
+								<img src={tocThumbnail.source_url} alt={tocThumbnail.alt_text || ''} loading="lazy" />
+							</div>
+						)}
+						<h2>Índice</h2>
+						<ul>
+							{tocItems.map((item) => (
+								<li class:list={[`toc-l${item.level}`]}>
+									<a href={`#${item.id}`}>{item.text}</a>
+								</li>
+							))}
+						</ul>
+					</aside>
+				)
+			}
 			<article>
 				<h1 set:html={item.title.rendered} />
 				<time datetime={item.date}>Actualizado el {new Date(item.modified || item.date).toLocaleDateString('es-ES')}</time>
-				<div class="post-content" set:html={item.content.rendered} />
+				<div class="post-content" set:html={contentWithAnchors} />
 			</article>
 		</main>
+		<script>
+			const headingNodes = Array.from(document.querySelectorAll<HTMLElement>('.post-content h2[id], .post-content h3[id]'));
+			const tocLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('.post-toc a[href^="#"]'));
+
+			if (headingNodes.length > 0 && tocLinks.length > 0) {
+				const stickyOffset = 120;
+				let ignoreScrollUntil = 0;
+				let isTicking = false;
+
+				const linkById = new Map(
+					tocLinks.map((link) => [decodeURIComponent(link.getAttribute('href')?.slice(1) || ''), link]),
+				);
+
+				const setActive = (id: string) => {
+					for (const link of tocLinks) {
+						link.classList.remove('active');
+					}
+					const activeLink = linkById.get(id);
+					if (activeLink) {
+						activeLink.classList.add('active');
+					}
+				};
+
+				const getActiveHeadingIdFromScroll = () => {
+					let activeId = headingNodes[0].id;
+					for (const heading of headingNodes) {
+						const headingTop = heading.getBoundingClientRect().top;
+						if (headingTop - stickyOffset <= 0) {
+							activeId = heading.id;
+						} else {
+							break;
+						}
+					}
+					return activeId;
+				};
+
+				const syncActiveFromScroll = () => {
+					if (Date.now() < ignoreScrollUntil) {
+						return;
+					}
+					setActive(getActiveHeadingIdFromScroll());
+				};
+
+				const onScroll = () => {
+					if (isTicking) {
+						return;
+					}
+					isTicking = true;
+					requestAnimationFrame(() => {
+						syncActiveFromScroll();
+						isTicking = false;
+					});
+				};
+
+				for (const link of tocLinks) {
+					link.addEventListener('click', (event) => {
+						event.preventDefault();
+						const href = link.getAttribute('href') || '';
+						const id = decodeURIComponent(href.slice(1));
+						const target = document.getElementById(id);
+						if (!target) {
+							return;
+						}
+
+						setActive(id);
+						ignoreScrollUntil = Date.now() + 700;
+
+						const targetTop = target.getBoundingClientRect().top + window.scrollY - (stickyOffset - 10);
+						window.scrollTo({ top: targetTop, behavior: 'smooth' });
+						history.replaceState(null, '', `#${id}`);
+					});
+				}
+
+				window.addEventListener('scroll', onScroll, { passive: true });
+
+				syncActiveFromScroll();
+			}
+		</script>
 		<Footer />
 	</body>
 </html>
