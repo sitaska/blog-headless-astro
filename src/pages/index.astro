@@ -21,6 +21,10 @@ function truncateText(value: string, maxLength = 130) {
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<style>
+			h1 {
+				text-align: center;
+				margin-bottom: 1rem;
+			}
 			ul {
 				list-style: none;
 				padding: 0;
@@ -41,10 +45,21 @@ function truncateText(value: string, maxLength = 130) {
 				border-radius: 8px;
 				margin-bottom: 0.6rem;
 			}
+			li > a {
+				display: block;
+				text-decoration: none;
+				color: inherit;
+			}
 			h2 {
 				font-size: 1.2rem;
 				line-height: 1.3;
 				margin-bottom: 0.2rem;
+				color: rgb(var(--black));
+				transition: color 140ms ease;
+			}
+			li > a:hover h2,
+			li > a:focus-visible h2 {
+				color: var(--accent);
 			}
 			time {
 				color: rgb(var(--gray));

@@ -194,12 +194,41 @@ const contentWithAnchors = normalizedPostContent.replace(/<h([23])([^>]*)>([\s\S
 				line-height: 1.35;
 				margin-top: 1.2rem;
 			}
+			.post-content {
+				font-size: 18px;
+				line-height: 1.45;
+			}
 			.post-content p,
 			.post-content li {
-				line-height: 1.52;
+				line-height: 1.45;
+			}
+			.post-content ul,
+			.post-content ol {
+				margin-top: 0;
+				margin-bottom: 0;
+			}
+			.post-content li + li {
+				margin-top: 0.75rem;
 			}
 			.post-content p {
 				margin-bottom: 0.8rem;
+			}
+			.post-content figure,
+			.post-content .wp-block-image,
+			.post-content .wp-block-embed,
+			.post-content .wp-block-video,
+			.post-content .wp-block-gallery,
+			.post-content .wp-block-cover {
+				margin-top: 1.2rem;
+				margin-bottom: 1.2rem;
+			}
+			.post-content img,
+			.post-content iframe,
+			.post-content video,
+			.post-content embed,
+			.post-content object {
+				margin-top: 1rem;
+				margin-bottom: 1rem;
 			}
 			time {
 				display: block;
