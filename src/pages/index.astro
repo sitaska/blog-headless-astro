@@ -80,6 +80,16 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 				flex-direction: column;
 				height: auto;
 				overflow: hidden;
+				transition: opacity 200ms ease, transform 200ms ease;
+			}
+			li.is-hidden {
+				opacity: 0;
+				transform: translateY(8px);
+				pointer-events: none;
+			}
+			li.is-entering {
+				opacity: 0;
+				transform: translateY(6px);
 			}
 			li img {
 				width: 100%;
@@ -220,12 +230,31 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 		<script>
 			const filterButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.category-pill'));
 			const cards = Array.from(document.querySelectorAll<HTMLElement>('ul > li[data-categories]'));
+			const fadeDuration = 200;
+			const staggerStep = 40;
 
 			const applyFilter = (filter: string) => {
+				const visibleCards = [] as HTMLElement[];
 				cards.forEach((card) => {
 					const categories = (card.getAttribute('data-categories') || '').split(' ').filter(Boolean);
 					const visible = filter === 'all' || categories.includes(filter);
-					card.style.display = visible ? '' : 'none';
+					if (visible) {
+						visibleCards.push(card);
+					} else {
+						card.classList.add('is-hidden');
+						window.setTimeout(() => {
+							card.style.display = 'none';
+						}, fadeDuration);
+					}
+				});
+
+				visibleCards.forEach((card, index) => {
+					card.style.display = '';
+					card.classList.add('is-entering');
+					window.setTimeout(() => {
+						card.classList.remove('is-hidden');
+						card.classList.remove('is-entering');
+					}, index * staggerStep);
 				});
 
 				filterButtons.forEach((button) => {
