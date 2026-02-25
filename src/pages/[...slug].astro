@@ -36,6 +36,7 @@ export async function getStaticPaths() {
 
 const { item } = Astro.props as Props;
 const isPost = 'categories' in item;
+const postTitlePlain = stripHtml(item.title.rendered);
 const title = `${stripHtml(item.title.rendered)} | ${SITE_TITLE}`;
 const description = item.excerpt?.rendered ? stripHtml(item.excerpt.rendered) : SITE_DESCRIPTION;
 const featuredMediaMap = await getFeaturedMediaMap([item.featured_media]);
@@ -45,7 +46,7 @@ const modifiedDate = new Date(item.modified || item.date).toISOString();
 const articleStructuredData = {
 	'@context': 'https://schema.org',
 	'@type': isPost ? 'BlogPosting' : 'WebPage',
-	headline: stripHtml(item.title.rendered),
+	headline: postTitlePlain,
 	description,
 	datePublished: publishedDate,
 	dateModified: modifiedDate,
@@ -226,7 +227,7 @@ const contentWithAnchors = normalizedPostContent.replace(/<h([23])([^>]*)>([\s\S
 					<aside class="post-toc" aria-label="Índice del artículo">
 						{tocThumbnail?.source_url && (
 							<div class="toc-thumb">
-								<img src={tocThumbnail.source_url} alt={tocThumbnail.alt_text || ''} loading="lazy" />
+								<img src={tocThumbnail.source_url} alt={postTitlePlain} loading="lazy" />
 							</div>
 						)}
 						<div class="toc-title">Índice</div>

@@ -73,10 +73,11 @@ function truncateText(value: string, maxLength = 130) {
 				<ul>
 					{posts.map((post) => {
 						const media = mediaMap.get(post.featured_media);
+						const postTitle = stripHtml(post.title.rendered);
 						return (
 							<li>
 								<a href={`/${post.slug}/`}>
-									{media?.source_url && <img src={media.source_url} alt={media.alt_text || ''} loading="lazy" />}
+									{media?.source_url && <img src={media.source_url} alt={postTitle} loading="lazy" />}
 									<h2 set:html={post.title.rendered} />
 								</a>
 								<time datetime={post.date}>{new Date(post.date).toLocaleDateString('es-ES')}</time>
