@@ -42,6 +42,9 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 	<head>
 		<BaseHead title={`${categoryName} | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
 		<style>
+			main {
+				width: 1120px;
+			}
 			h1 {
 				text-align: center;
 				margin-bottom: 1.7rem;
@@ -75,7 +78,7 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 				list-style: none;
 				padding: 0;
 				display: grid;
-				grid-template-columns: repeat(2, minmax(0, 1fr));
+				grid-template-columns: repeat(3, minmax(0, 1fr));
 				gap: 1.25rem;
 			}
 			li {
@@ -94,7 +97,7 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 				border-radius: 8px;
 				margin-bottom: 0.9rem;
 			}
-			li > a {
+			.card-main-link {
 				display: flex;
 				flex-direction: column;
 				text-decoration: none;
@@ -116,6 +119,12 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 				background: var(--tag-bg);
 				color: var(--tag-text);
 				border: 1px solid var(--tag-border);
+				text-decoration: none;
+				transition: filter 140ms ease;
+			}
+			.category-tag:hover,
+			.category-tag:focus-visible {
+				filter: brightness(0.96);
 			}
 			h2 {
 				font-size: 1.2rem;
@@ -124,8 +133,8 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 				color: rgb(var(--black));
 				transition: color 140ms ease;
 			}
-			li > a:hover h2,
-			li > a:focus-visible h2 {
+			.card-main-link:hover h2,
+			.card-main-link:focus-visible h2 {
 				color: var(--accent);
 			}
 			time {
@@ -137,6 +146,11 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 				margin-bottom: 0;
 				font-size: 0.95rem;
 				line-height: 1.5;
+			}
+			@media (max-width: 1150px) {
+				ul {
+					grid-template-columns: repeat(2, minmax(0, 1fr));
+				}
 			}
 			@media (max-width: 900px) {
 				ul {
@@ -169,23 +183,26 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 							.filter((category): category is WPCategory => Boolean(category));
 						return (
 							<li>
-								<a href={`/${post.slug}/`}>
+								<a class="card-main-link" href={`/${post.slug}/`}>
 									{media?.source_url && <img src={media.source_url} alt={postTitle} loading="lazy" />}
-									{postCategories.length > 0 && (
-										<div class="card-categories" aria-label="Categorías del post">
-											{postCategories.map((category) => {
-												const colors = getCategoryBadgeColors(category.id);
-												return (
-													<span
-														class="category-tag"
-														style={`--tag-bg: ${colors.bg}; --tag-text: ${colors.text}; --tag-border: ${colors.border};`}
-													>
-														{category.name}
-													</span>
-												);
-											})}
-										</div>
-									)}
+								</a>
+								{postCategories.length > 0 && (
+									<div class="card-categories" aria-label="Categorías del post">
+										{postCategories.map((category) => {
+											const colors = getCategoryBadgeColors(category.id);
+											return (
+												<a
+													class="category-tag"
+													href={`/categorias/${category.slug}/`}
+													style={`--tag-bg: ${colors.bg}; --tag-text: ${colors.text}; --tag-border: ${colors.border};`}
+												>
+													{category.name}
+												</a>
+											);
+										})}
+									</div>
+								)}
+								<a class="card-main-link" href={`/${post.slug}/`}>
 									<h2 set:html={post.title.rendered} />
 								</a>
 								<time datetime={post.date}>{new Date(post.date).toLocaleDateString('es-ES')}</time>

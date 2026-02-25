@@ -88,7 +88,7 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 				border-radius: 8px;
 				margin-bottom: 0.9rem;
 			}
-			li > a {
+			.card-main-link {
 				display: flex;
 				flex-direction: column;
 				text-decoration: none;
@@ -110,6 +110,12 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 				background: var(--tag-bg);
 				color: var(--tag-text);
 				border: 1px solid var(--tag-border);
+				text-decoration: none;
+				transition: filter 140ms ease;
+			}
+			.category-tag:hover,
+			.category-tag:focus-visible {
+				filter: brightness(0.96);
 			}
 			h2 {
 				font-size: 1.2rem;
@@ -118,8 +124,8 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 				color: rgb(var(--black));
 				transition: color 140ms ease;
 			}
-			li > a:hover h2,
-			li > a:focus-visible h2 {
+			.card-main-link:hover h2,
+			.card-main-link:focus-visible h2 {
 				color: var(--accent);
 			}
 			time {
@@ -181,48 +187,26 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 						const postCategorySlugs = postCategories.map((category) => category.slug).join(' ');
 						return (
 							<li data-categories={postCategorySlugs}>
-								<a href={`/${post.slug}/`}>
+								<a class="card-main-link" href={`/${post.slug}/`}>
 									{media?.source_url && <img src={media.source_url} alt={postTitle} loading="lazy" />}
-									{postCategories.length > 0 && (
-										<div class="card-categories" aria-label="Categorías del post">
-											{postCategories.map((category) => {
-												const colors = getCategoryBadgeColors(category.id);
-												return (
-													<span
-														class="category-tag"
-														style={`--tag-bg: ${colors.bg}; --tag-text: ${colors.text}; --tag-border: ${colors.border};`}
-													>
-														{category.name}
-													</span>
-												);
-											})}
-										</div>
-									)}
-									<script>
-										const filterButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.category-pill'));
-										const cards = Array.from(document.querySelectorAll<HTMLElement>('ul > li[data-categories]'));
-
-										const applyFilter = (filter: string) => {
-											cards.forEach((card) => {
-												const categories = (card.getAttribute('data-categories') || '').split(' ').filter(Boolean);
-												const visible = filter === 'all' || categories.includes(filter);
-												card.style.display = visible ? '' : 'none';
-											});
-
-											filterButtons.forEach((button) => {
-												const isActive = button.getAttribute('data-filter') === filter;
-												button.classList.toggle('is-active', isActive);
-												button.setAttribute('aria-pressed', String(isActive));
-											});
-										};
-
-										filterButtons.forEach((button) => {
-											button.addEventListener('click', () => {
-												const filter = button.getAttribute('data-filter') || 'all';
-												applyFilter(filter);
-											});
-										});
-									</script>
+								</a>
+								{postCategories.length > 0 && (
+									<div class="card-categories" aria-label="Categorías del post">
+										{postCategories.map((category) => {
+											const colors = getCategoryBadgeColors(category.id);
+											return (
+												<a
+													class="category-tag"
+													href={`/categorias/${category.slug}/`}
+													style={`--tag-bg: ${colors.bg}; --tag-text: ${colors.text}; --tag-border: ${colors.border};`}
+												>
+													{category.name}
+												</a>
+											);
+										})}
+									</div>
+								)}
+								<a class="card-main-link" href={`/${post.slug}/`}>
 									<h2 set:html={post.title.rendered} />
 								</a>
 								<time datetime={post.date}>{new Date(post.date).toLocaleDateString('es-ES')}</time>
@@ -233,6 +217,31 @@ const categoriesById = new Map(categories.map((category) => [category.id, catego
 				</ul>
 			)}
 		</main>
+		<script>
+			const filterButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.category-pill'));
+			const cards = Array.from(document.querySelectorAll<HTMLElement>('ul > li[data-categories]'));
+
+			const applyFilter = (filter: string) => {
+				cards.forEach((card) => {
+					const categories = (card.getAttribute('data-categories') || '').split(' ').filter(Boolean);
+					const visible = filter === 'all' || categories.includes(filter);
+					card.style.display = visible ? '' : 'none';
+				});
+
+				filterButtons.forEach((button) => {
+					const isActive = button.getAttribute('data-filter') === filter;
+					button.classList.toggle('is-active', isActive);
+					button.setAttribute('aria-pressed', String(isActive));
+				});
+			};
+
+			filterButtons.forEach((button) => {
+				button.addEventListener('click', () => {
+					const filter = button.getAttribute('data-filter') || 'all';
+					applyFilter(filter);
+				});
+			});
+		</script>
 		<Footer />
 	</body>
 </html>
