@@ -285,13 +285,13 @@ const contentWithAnchors = normalizedPostContent.replace(/<h([23])([^>]*)>([\s\S
 		<main class:list={['post-layout', { 'has-toc': tocItems.length > 0 }]}>
 			{
 				tocItems.length > 0 && (
-					<aside class="post-toc" aria-label="Índice del artículo">
+					<aside class="post-toc" aria-label="Contenidos del artículo">
 						{tocThumbnail?.source_url && (
 							<div class="toc-thumb">
 								<img src={tocThumbnail.source_url} alt={postTitlePlain} loading="lazy" />
 							</div>
 						)}
-						<div class="toc-title">Índice</div>
+						<div class="toc-title">Contenidos</div>
 						<ul>
 							{tocItems.map((item) => (
 								<li class:list={[`toc-l${item.level}`]}>
