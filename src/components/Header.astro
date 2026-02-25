@@ -1,11 +1,17 @@
 ---
 import { SITE_TITLE } from '../consts';
 import HeaderLink from './HeaderLink.astro';
+
+const BRAND_LOGO_URL = 'https://cms.lascositasdesita.com/wp-content/uploads/2026/01/IconoSita.png';
 ---
 
 <header>
 	<nav>
-		<h2><a href="/">{SITE_TITLE}</a></h2>
+		<div class="brand">
+			<a class="brand-logo" href="/" aria-label={SITE_TITLE}>
+				<img src={BRAND_LOGO_URL} alt={SITE_TITLE} loading="eager" decoding="async" />
+			</a>
+		</div>
 		<button class="menu-toggle" type="button" aria-controls="main-nav-links" aria-expanded="false" aria-label="Abrir menú">
 			<span></span>
 			<span></span>
@@ -31,14 +37,23 @@ import HeaderLink from './HeaderLink.astro';
 		top: 0;
 		z-index: 40;
 	}
-	h2 {
+	.brand {
 		margin: 0;
-		font-size: 1em;
 	}
 
-	h2 a,
-	h2 a.active {
+	.brand a,
+	.brand a.active {
 		text-decoration: none;
+	}
+	.brand-logo {
+		display: inline-flex;
+		align-items: center;
+		padding: 0;
+	}
+	.brand-logo img {
+		display: block;
+		height: 40px;
+		width: auto;
 	}
 	nav {
 		display: flex;
@@ -94,6 +109,9 @@ import HeaderLink from './HeaderLink.astro';
 	@media (max-width: 768px) {
 		header {
 			padding: 0 1em;
+		}
+		.brand-logo img {
+			height: 34px;
 		}
 		nav {
 			min-height: 62px;

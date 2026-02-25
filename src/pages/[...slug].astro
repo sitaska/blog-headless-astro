@@ -35,10 +35,38 @@ export async function getStaticPaths() {
 }
 
 const { item } = Astro.props as Props;
+const isPost = 'categories' in item;
 const title = `${stripHtml(item.title.rendered)} | ${SITE_TITLE}`;
 const description = item.excerpt?.rendered ? stripHtml(item.excerpt.rendered) : SITE_DESCRIPTION;
 const featuredMediaMap = await getFeaturedMediaMap([item.featured_media]);
 const tocThumbnail = featuredMediaMap.get(item.featured_media);
+const publishedDate = new Date(item.date).toISOString();
+const modifiedDate = new Date(item.modified || item.date).toISOString();
+const articleStructuredData = {
+	'@context': 'https://schema.org',
+	'@type': isPost ? 'BlogPosting' : 'WebPage',
+	headline: stripHtml(item.title.rendered),
+	description,
+	datePublished: publishedDate,
+	dateModified: modifiedDate,
+	mainEntityOfPage: {
+		'@type': 'WebPage',
+		'@id': Astro.url.href,
+	},
+	author: {
+		'@type': 'Organization',
+		name: SITE_TITLE,
+	},
+	publisher: {
+		'@type': 'Organization',
+		name: SITE_TITLE,
+	},
+	...(tocThumbnail?.source_url
+		? {
+			image: [tocThumbnail.source_url],
+		}
+		: {}),
+};
 
 const stripTags = (value: string) => value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 const slugify = (value: string) =>
@@ -53,7 +81,11 @@ const slugify = (value: string) =>
 const idCounter = new Map<string, number>();
 const tocItems: TocItem[] = [];
 
-const contentWithAnchors = item.content.rendered.replace(/<h([23])([^>]*)>([\s\S]*?)<\/h\1>/gi, (_full, rawLevel, rawAttrs, inner) => {
+const normalizedPostContent = item.content.rendered
+	.replace(/<h1([^>]*)>/gi, '<h2$1>')
+	.replace(/<\/h1>/gi, '</h2>');
+
+const contentWithAnchors = normalizedPostContent.replace(/<h([23])([^>]*)>([\s\S]*?)<\/h\1>/gi, (_full, rawLevel, rawAttrs, inner) => {
 	const level = Number(rawLevel) as 2 | 3;
 	const currentIdMatch = rawAttrs.match(/\sid=["']([^"']+)["']/i);
 	const baseId = currentIdMatch?.[1] || slugify(inner);
@@ -76,6 +108,7 @@ const contentWithAnchors = item.content.rendered.replace(/<h([23])([^>]*)>([\s\S
 <html lang="es">
 	<head>
 		<BaseHead title={title} description={description} />
+		<script is:inline type="application/ld+json" set:html={JSON.stringify(articleStructuredData)} />
 		<style>
 			main.post-layout {
 				width: min(1100px, calc(100% - 2em));
@@ -110,9 +143,11 @@ const contentWithAnchors = item.content.rendered.replace(/<h([23])([^>]*)>([\s\S
 				object-fit: cover;
 				border-radius: 8px;
 			}
-			aside.post-toc h2 {
+			aside.post-toc .toc-title {
 				font-size: 1rem;
 				margin-bottom: 0.5rem;
+				font-weight: 700;
+				color: rgb(var(--black));
 			}
 			aside.post-toc ul {
 				list-style: none;
@@ -194,7 +229,7 @@ const contentWithAnchors = item.content.rendered.replace(/<h([23])([^>]*)>([\s\S
 								<img src={tocThumbnail.source_url} alt={tocThumbnail.alt_text || ''} loading="lazy" />
 							</div>
 						)}
-						<h2>Índice</h2>
+						<div class="toc-title">Índice</div>
 						<ul>
 							{tocItems.map((item) => (
 								<li class:list={[`toc-l${item.level}`]}>
