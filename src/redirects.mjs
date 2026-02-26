@@ -1,7 +1,7 @@
 const redirects = {
 	'/blog': '/',
 	'/posts': '/',
-	'/tag/:slug': '/categorias/:slug',
+	'/tag/:slug': '/',
 	'/author/:slug': '/',
 	'/10-herramientas-que-puedes-usar-en-tu-stream-de-twitch/': '/',
 	'/funcionalidades-y-trucos-obs-studio/': '/',
